@@ -107,7 +107,7 @@ main_menu = InlineKeyboardMarkup(
 	inline_keyboard=[
 		[
 			InlineKeyboardButton(text="Menyu", callback_data="menu"),
-			InlineKeyboardButton(text="Savatcha", callback_data="savatcha")
+			InlineKeyboardButton(text="Savatcha", callback_data="cart")
 		],
 		[InlineKeyboardButton(text="Mening Buyurtmalarim", callback_data="mening_buyurtmalarim")],
 		[InlineKeyboardButton(text="Aloqa", callback_data="aloqa")]
@@ -163,4 +163,14 @@ def create_buttons(call_data):
 	
 	return buyurtma_tugmasi
 
-print(create_buttons("burger"))
+
+#===== SAVATCHA TUGMALAR =====
+def cart_product_buttons(category, product_id):
+	cart_button_builder = InlineKeyboardBuilder()
+	
+	cart_button_builder.button(text="-", callback_data=f"remove_{category}_product_id")
+	cart_button_builder.button(text="+", callback_data=f"add_{category}_product_id")
+	cart_button_builder.adjuts(2)
+	cart_button = cart_button_builder.as_markup()
+	
+	return cart_button

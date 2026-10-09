@@ -2,6 +2,7 @@ from aiogram import Router, F
 from aiogram.types import CallbackQuery, Message
 from buttons.inline import menu_kategorys, burger_buttons, pizza_buttons, ichimlik_butttons, create_buttons
 from data import foods
+from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 
 router = Router()
@@ -71,6 +72,13 @@ async def show_cart(callback: CallbackQuery):
 	text = ""
 	counts = {}
 	total = 0
+	i = 0
+	keyboard = InlineKeyboardBuilder()
+	
+	if user_id not in cart or not cart[user_id]:
+		await callback.message.answer("Savatchangiz bo`sh")
+		await callback.answer()
+		return
 	
 	for kategory, product_id in cart[user_id]:
 		if (kategory, product_id) in counts:
@@ -79,15 +87,31 @@ async def show_cart(callback: CallbackQuery):
 			counts[(kategory, product_id)] = 1
 	
 	for (kategory, product_id), quantity in counts.items():
+		i += 1
 		food = foods[kategory][product_id]
-		text += f"{food['name']} x{quantity} - {food['price'] * quantity} somoni\n\n"
+		text += f"{i}) {food['name']} x{quantity} - {food['price'] * quantity} somoni\n\n"
 		total += food['price'] * quantity
+		
+		keyboard.button(text=f"{i} -", callback_data=f"remove_{kategory}_{product_id}")
+		keyboard.button(text=f"{i} +", callback_data=f"add_{kategory}_{product_id}")
 	
 	text +=	f"\n\nJami narxi: {total}"
-		
-	await callback.message.answer(text)
-	await callback.answer()
+	keyboard.adjust(2)
+	klaviatura = keyboard.as_markup()
 	
+	await callback.message.answer(text, reply_markup=klaviatura)
+	await callback.answer()
+
+
+#===== REMOVE RODUCT =====
+@router.callback_query(F.data.startswith("remove_"))
+async def remove_product(callback: CallbackQuery):
+	user_id = callback.from_user.id
+	call_split_list = callback.data.split("_")
+	kategory = call_split_list[1]
+	product_id = call_split_list[2]
+	
+	await callback.message.answer(f"Kategory {kategory}\n\nProduct_id {product_id}")
 
 
 @router.callback_query()

@@ -168,8 +168,8 @@ def create_buttons(call_data):
 def cart_product_buttons(category, product_id):
 	cart_button_builder = InlineKeyboardBuilder()
 	
-	cart_button_builder.button(text="-", callback_data=f"remove_{category}_product_id")
-	cart_button_builder.button(text="+", callback_data=f"add_{category}_product_id")
+	cart_button_builder.button(text="-", callback_data=f"remove_{category}_{product_id}")
+	cart_button_builder.button(text="+", callback_data=f"add_{category}_{product_id}")
 	cart_button_builder.adjuts(2)
 	cart_button = cart_button_builder.as_markup()
 	

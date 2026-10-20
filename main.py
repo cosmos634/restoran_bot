@@ -1,6 +1,7 @@
 """Application entry point."""
 import asyncio
 import logging
+from threading import Thread
 
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
@@ -13,12 +14,17 @@ from handlers.admin import router as admin_router
 from handlers.callbacks import router as callbacks_router
 from handlers.checkout import router as checkout_router
 from handlers.commands import router as commands_router
+from health import run_health_server
 
 
 async def main() -> None:
     settings = get_settings()
     init_db(settings.database_path)
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
+
+    # Render and UptimeRobot can check the HTTP endpoint while Telegram polling runs.
+    Thread(target=run_health_server, name="health-server", daemon=True).start()
+
     bot = Bot(token=settings.bot_token, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
     dispatcher = Dispatcher(storage=MemoryStorage())
     dispatcher["database_path"] = settings.database_path

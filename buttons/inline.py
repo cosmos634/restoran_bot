@@ -1,176 +1,107 @@
+"""Keyboard builders. Callback payloads use ':' separators to preserve IDs with underscores."""
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.utils.keyboard import InlineKeyboardBuilder
+from data import foods, CATEGORY_NAMES
 
 
-#===== MENU ITEMS =====
-menus = [
-	{
-		"name": "Pitsalar",
-		"cal_data": "pizza"
-	},
-	{
-		"name": "Burgerlar",
-		"cal_data": "burger"
-	},
-	{
-		"name": "Ichimliklar",
-		"cal_data": "ichimlik"
-	},
-	{
-		"name": "Orqaga",
-		"cal_data": "back"
-	}
-]
+def _button(text: str, callback_data: str) -> InlineKeyboardButton:
+    return InlineKeyboardButton(text=text, callback_data=callback_data)
 
 
-#===== BURGERS DATA =====
-burgers = [
-	{
-		"name": "Cheeseburger",
-		"cal_data": "cheesburger"
-	},
-	{
-		"name": "Chicken Burger",
-		"cal_data": "chicken_burger"
-	},
-	{
-		"name": "Double Burger",
-		"cal_data": "double_burger"
-	},
-	{
-		"name": "Orqaga",
-		"cal_data": "back"
-	}
-]
+def main_menu() -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [_button("🍕 Меню", "menu"), _button("🛒 Корзина", "cart:show")],
+        [_button("📦 Мои заказы", "orders:history")],
+        [_button("☎️ Контакты", "contact")],
+    ])
 
 
-#===== PIZZA DATA
-pizzas = [
-	{
-		"name": "Margarita",
-		"cal_data": "margarita"
-	},
-	{
-		"name": "Pepperoni",
-		"cal_data": "pepperoni"
-	},
-	{
-		"name": "Chicken",
-		"cal_data": "chiken"
-	},
-	{
-		"name": "Cheese",
-		"cal_data": "cheese"
-	},
-	{
-		"name": "Meat pizza",
-		"cal_data": "meat_pizza"
-	},
-	{
-		"name": "Orqaga",
-		"cal_data": "back"
-	}
-]
+def categories_keyboard() -> InlineKeyboardMarkup:
+    builder = InlineKeyboardBuilder()
+    for category, title in CATEGORY_NAMES.items():
+        builder.button(text=title, callback_data=f"category:{category}")
+    builder.button(text="⬅️ Главное меню", callback_data="home")
+    builder.adjust(2, 1)
+    return builder.as_markup()
 
 
-#===== ISHIMLIKLAR DATA =====
-ichimliklar = [
-	{
-		"name": "Coca-Cola",
-		"cal_data": "coca_cola"
-	},
-	{
-		"name": "Fanta",
-		"cal_data": "fanta"
-	},
-	{
-		"name": "Sprite",
-		"cal_data": "sprite"
-	},
-	{
-		"name": "Apelsin sharbati",
-		"cal_data": "apelsin_sharbat"
-	},
-	{
-		"name": "Olam sharbati",
-		"cal_data": "olma_sharbat"
-	},
-	{
-		"name": "Orqaga",
-		"cal_data": "back"
-	}
-]
+def products_keyboard(category: str) -> InlineKeyboardMarkup:
+    builder = InlineKeyboardBuilder()
+    for product_id, product in foods.get(category, {}).items():
+        builder.button(text=f"{product['name']} · {product['price']}", callback_data=f"product:{category}:{product_id}")
+    builder.button(text="🛒 Корзина", callback_data="cart:show")
+    builder.button(text="⬅️ Категории", callback_data="menu")
+    builder.adjust(1)
+    return builder.as_markup()
 
 
-#====== MAIN MENU =====
-main_menu = InlineKeyboardMarkup(
-	inline_keyboard=[
-		[
-			InlineKeyboardButton(text="Menyu", callback_data="menu"),
-			InlineKeyboardButton(text="Savatcha", callback_data="cart")
-		],
-		[InlineKeyboardButton(text="Mening Buyurtmalarim", callback_data="mening_buyurtmalarim")],
-		[InlineKeyboardButton(text="Aloqa", callback_data="aloqa")]
-	]
-)
+def product_keyboard(category: str, product_id: str) -> InlineKeyboardMarkup:
+    builder = InlineKeyboardBuilder()
+    builder.button(text="➕ Добавить в корзину", callback_data=f"cart:add:{category}:{product_id}")
+    builder.button(text="⬅️ К товарам", callback_data=f"category:{category}")
+    builder.button(text="🛒 Открыть корзину", callback_data="cart:show")
+    builder.adjust(1)
+    return builder.as_markup()
 
 
-#====== MENYU KATEGORY ======
-builder = InlineKeyboardBuilder()
-for menu in menus:
-	builder.button(text=menu["name"], callback_data=menu["cal_data"])
-	
-builder.adjust(2)
-
-menu_kategorys = builder.as_markup()
-
-
-#===== BURGER KATEGORY =====
-burger_builder = InlineKeyboardBuilder()
-for burger in burgers:
-	burger_builder.button(text=burger["name"], callback_data=burger["cal_data"])
-	
-burger_builder.adjust(1)
-burger_buttons = burger_builder.as_markup()
+def cart_keyboard(items: list[dict]) -> InlineKeyboardMarkup:
+    builder = InlineKeyboardBuilder()
+    for item in items:
+        key = f"{item['category']}:{item['product_id']}"
+        builder.button(text=f"➖ {item['name']}", callback_data=f"cart:adjust:-1:{key}")
+        builder.button(text=f"➕ {item['name']}", callback_data=f"cart:adjust:1:{key}")
+    if items:
+        builder.button(text="🧹 Очистить корзину", callback_data="cart:clear")
+        builder.button(text="✅ Оформить заказ", callback_data="checkout:start")
+    builder.button(text="⬅️ Главное меню", callback_data="home")
+    builder.adjust(2)
+    return builder.as_markup()
 
 
-#===== PIZZA KATEGORY =====
-pizza_builder = InlineKeyboardBuilder()
-for pizza in pizzas:
-	pizza_builder.button(text=pizza["name"], callback_data=pizza["cal_data"])
-	
-pizza_builder.adjust(2)
-pizza_buttons = pizza_builder.as_markup()
+def clear_confirmation_keyboard() -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(inline_keyboard=[[
+        _button("Да, очистить", "cart:clear:yes"),
+        _button("Нет, назад", "cart:show"),
+    ]])
 
 
-#===== ICHIMLIK KATEGORY
-ichimlik_builder = InlineKeyboardBuilder()
-for ichimlik in ichimliklar:
-	ichimlik_builder.button(text=ichimlik["name"], callback_data=ichimlik["cal_data"])
-
-ichimlik_builder.adjust(2)
-ichimlik_butttons = ichimlik_builder.as_markup()
+def checkout_review_keyboard() -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [_button("✅ Подтвердить заказ", "checkout:confirm")],
+        [_button("❌ Отменить оформление", "checkout:cancel")],
+    ])
 
 
-#===== BUYURTMA TUGMASI =====
-def create_buttons(call_data):
-	button_builder = InlineKeyboardBuilder()
-	button_builder.button(text="Savatchaga", callback_data=f"cart_{call_data}")
-	button_builder.button(text="Orqaga", callback_data="back")
-	
-	button_builder.adjust(2)
-	buyurtma_tugmasi = button_builder.as_markup()
-	
-	return buyurtma_tugmasi
+def contact_keyboard() -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(inline_keyboard=[[
+        _button("⬅️ Отменить оформление", "checkout:cancel")
+    ]])
 
 
-#===== SAVATCHA TUGMALAR =====
-def cart_product_buttons(category, product_id):
-	cart_button_builder = InlineKeyboardBuilder()
-	
-	cart_button_builder.button(text="-", callback_data=f"remove_{category}_{product_id}")
-	cart_button_builder.button(text="+", callback_data=f"add_{category}_{product_id}")
-	cart_button_builder.adjuts(2)
-	cart_button = cart_button_builder.as_markup()
-	
-	return cart_button
+def phone_reply_keyboard():
+    from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
+    return ReplyKeyboardMarkup(
+        keyboard=[[KeyboardButton(text="📱 Отправить мой контакт", request_contact=True)],
+                  [KeyboardButton(text="Отмена")]],
+        resize_keyboard=True, one_time_keyboard=True,
+    )
+
+
+def remove_reply_keyboard():
+    from aiogram.types import ReplyKeyboardRemove
+    return ReplyKeyboardRemove()
+
+
+def order_history_keyboard() -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(inline_keyboard=[[
+        _button("⬅️ Главное меню", "home")
+    ]])
+
+
+def admin_order_keyboard(order_number: str) -> InlineKeyboardMarkup:
+    builder = InlineKeyboardBuilder()
+    for status, title in [("accepted", "Принять"), ("preparing", "Готовится"),
+                          ("completed", "Завершён"), ("cancelled", "Отменить")]:
+        builder.button(text=title, callback_data=f"admin:status:{status}:{order_number}")
+    builder.adjust(2)
+    return builder.as_markup()

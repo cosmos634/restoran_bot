@@ -22,6 +22,12 @@ class Checkout(StatesGroup):
     review = State()
 
 
+@router.message(Checkout.name | Checkout.phone | Checkout.fulfillment | Checkout.address | Checkout.review, F.text.lower() == "отмена")
+async def cancel_checkout_any_step(message: Message, state: FSMContext):
+    await state.clear()
+    await message.answer("Оформление отменено. Корзина сохранена.", reply_markup=main_menu())
+
+
 def _review_text(data: dict, items: list[dict], currency: str) -> str:
     fulfillment = "Доставка" if data["fulfillment"] == "delivery" else "Самовывоз"
     address = f"\nАдрес: {html.escape(data['address'])}" if data["fulfillment"] == "delivery" else ""
@@ -121,12 +127,6 @@ async def show_review(message: Message, state: FSMContext, database_path: str, c
         return
     await state.set_state(Checkout.review)
     await message.answer(_review_text(data, items, currency), reply_markup=checkout_review_keyboard(), parse_mode="HTML")
-
-
-@router.message(Checkout.review, F.text.casefold() == "отмена")
-async def cancel_checkout_text(message: Message, state: FSMContext):
-    await state.clear()
-    await message.answer("Оформление отменено. Корзина сохранена.", reply_markup=main_menu())
 
 
 @router.callback_query(F.data == "checkout:cancel")

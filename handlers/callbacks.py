@@ -1,7 +1,7 @@
 from aiogram import F, Router
 from aiogram.types import CallbackQuery
 
-from buttons.inline import categories_keyboard, products_keyboard, product_keyboard, main_menu
+from buttons.inline import categories_keyboard, products_keyboard, product_keyboard, main_menu, cart_keyboard
 from data import foods, get_product, CATEGORY_NAMES
 from database import add_to_cart, adjust_cart, clear_cart, get_cart
 from handlers.common import cart_text
@@ -69,7 +69,7 @@ async def add_item(callback: CallbackQuery, database_path: str):
 @router.callback_query(F.data == "cart:show")
 async def show_cart(callback: CallbackQuery, database_path: str, currency: str):
     items = get_cart(callback.from_user.id, database_path)
-    await safe_edit(callback, cart_text(items, currency), __import__("buttons.inline", fromlist=["cart_keyboard"]).cart_keyboard(items))
+    await safe_edit(callback, cart_text(items, currency), cart_keyboard(items))
     await callback.answer()
 
 

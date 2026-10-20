@@ -113,7 +113,3 @@ async def contact(callback: CallbackQuery):
     await safe_edit(callback, "По вопросам заказа напишите администратору ресторана. Контакт администратора можно добавить в настройках ресторана.", main_menu())
     await callback.answer()
 
-
-@router.callback_query()
-async def unknown_callback(callback: CallbackQuery):
-    await callback.answer("Эта кнопка устарела. Откройте меню заново.", show_alert=True)

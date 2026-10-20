@@ -199,6 +199,32 @@ def get_order_by_number(order_number: str, db_path: str) -> dict | None:
     return dict(row) if row else None
 
 
+def list_orders(db_path: str, limit: int = 15) -> list[dict]:
+    """Return the newest orders for the admin panel."""
+    limit = max(1, min(int(limit), 50))
+    with connect(db_path) as db:
+        rows = db.execute(
+            "SELECT * FROM orders ORDER BY created_at DESC, id DESC LIMIT ?", (limit,)
+        ).fetchall()
+    return [dict(row) for row in rows]
+
+
+def order_stats(db_path: str) -> dict:
+    """Return order counts and revenue from non-cancelled orders."""
+    with connect(db_path) as db:
+        row = db.execute("""
+            SELECT COUNT(*) AS total,
+                   SUM(CASE WHEN status='pending' THEN 1 ELSE 0 END) AS pending,
+                   SUM(CASE WHEN status='accepted' THEN 1 ELSE 0 END) AS accepted,
+                   SUM(CASE WHEN status='preparing' THEN 1 ELSE 0 END) AS preparing,
+                   SUM(CASE WHEN status='completed' THEN 1 ELSE 0 END) AS completed,
+                   SUM(CASE WHEN status='cancelled' THEN 1 ELSE 0 END) AS cancelled,
+                   COALESCE(SUM(CASE WHEN status!='cancelled' THEN total ELSE 0 END), 0) AS revenue
+            FROM orders
+        """).fetchone()
+    return {key: (row[key] or 0) for key in row.keys()}
+
+
 def update_order_status(order_number: str, status: str, db_path: str) -> bool:
     allowed = {"pending", "accepted", "preparing", "completed", "cancelled"}
     if status not in allowed:

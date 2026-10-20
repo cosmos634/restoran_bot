@@ -4,6 +4,7 @@ import html
 import uuid
 from aiogram import F, Router
 from aiogram.fsm.context import FSMContext
+from aiogram.filters import StateFilter
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import CallbackQuery, Message
 
@@ -22,7 +23,7 @@ class Checkout(StatesGroup):
     review = State()
 
 
-@router.message(Checkout.name | Checkout.phone | Checkout.fulfillment | Checkout.address | Checkout.review, F.text.lower() == "отмена")
+@router.message(StateFilter(Checkout.name, Checkout.phone, Checkout.fulfillment, Checkout.address, Checkout.review), F.text.lower() == "отмена")
 async def cancel_checkout_any_step(message: Message, state: FSMContext):
     await state.clear()
     await message.answer("Оформление отменено. Корзина сохранена.", reply_markup=main_menu())
